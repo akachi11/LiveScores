@@ -11,11 +11,12 @@ const MAX_LIMIT = 100;
 
 matchRouter.get('/', async (req, res) => {
 
+    const parsed = listMatchesQuerySchema.safeParse(req.query);
+
     if (!parsed.success) {
         return res.status(400).json({error: 'Invalid query.', details: parsed.error.issues });
     }
 
-    const parsed = listMatchesQuerySchema.safeParse(req.query);
 
     const limit = Math.min(parsed.data.limit ?? 50, MAX_LIMIT);
 
@@ -49,6 +50,10 @@ matchRouter.post('/', async (req, res) => {
             awayScore: awayScore ?? 0,
             status: getMatchStatus(startTime, endTime)
         }).returning()
+
+        if(res.app.locals.broadcastMatchCreated) {
+            res.app.locals.broadcastMatchCreated(event)
+        }
 
         res.status(201).json({data: event})
     } catch (e) {
